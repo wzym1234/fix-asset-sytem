@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Login - Fixed Asset Inventory System</title>
+    <link href="https://unpkg.com/daisyui@3.7.4/dist/full.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=typography,line-clamp,aspect-ratio"></script>
+    <!-- Styles -->
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn {
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .input {
+            border-radius: 6px;
+            border-color: #d1d5db;
+        }
+
+        .input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 flex justify-center items-center h-screen">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Login</h2>
+            {% if error %}
+            <div class="alert alert-error">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ error }}</span>
+                </div>
+            </div>
+            {% endif %}
+            <form method="post">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Username</span>
+                    </label>
+                    <input type="text" name="username" placeholder="Username" class="input input-bordered">
+                </div>
+                <div class="form-control mt-3">
+                    <label class="label">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <input type="password" name="password" placeholder="Password" class="input input-bordered">
+                </div>
+                <div class="form-control mt-6">
+                    <button class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

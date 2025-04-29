@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Fixed Asset Inventory System</title>
+    <link href="https://unpkg.com/daisyui@3.7.4/dist/full.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=typography,line-clamp,aspect-ratio"></script>
+    <!-- Styles -->
+    <style>
+        /* Overall background color */
+        body {
+            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Card style optimization */
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Table style optimization */
+        table {
+            font-size: 0.875rem;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table th,
+        table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        /* Button style optimization */
+        .btn {
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+
+        .btn-accent {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background-color: #059669;
+        }
+
+        .btn-info {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #2563eb;
+        }
+
+        /* Input style optimization */
+        .input {
+            border-radius: 6px;
+            border-color: #d1d5db;
+        }
+
+        .input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Select style optimization */
+        .select {
+            border-radius: 6px;
+            border-color: #d1d5db;
+        }
+
+        .select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Responsive hide */
+        @media (max-width: 640px) {
+            .hidden-mobile {
+                display: none !important;
+            }
+        }
+
+        /* New style to align file operation elements in a row */
+        .file-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- New: Display user login status and logout button -->
+    <div class="p-4 bg-gray-200 flex justify-between items-center">
+        <span>Logged in</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+    </div>
+    <!-- New: Display statistical information -->
+    <div class="p-4 bg-gray-100">
+        <p>Total imported records: {{ total_count }}</p>
+        <p>Currently checked records: {{ checked_count }}</p>
+        <p>Unchecked records: {{ unchecked_count }}</p>
+    </div>
+    <div class="grid grid-cols-1 gap-4 mb-8">
+        <!-- File upload -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-lg font-bold mb-4">File Operations</h2>
+                <div class="file-actions">
+                    <!-- File upload form -->
+                    <form method="post" enctype="multipart/form-data" class="flex gap-2">
+                        <input type="file" name="file" 
+                               class="file-input file-input-bordered w-full max-w-xs"
+                               accept=".xlsx">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-upload sm:mr-2"></i>
+                            Upload Inventory File
+                        </button>
+                    </form>
+                </div>
+                <!-- New export button -->
+                <a href="{{ url_for('export_file') }}" class="btn btn-info mt-2">
+                    <i class="fas fa-download sm:mr-2"></i>
+                    Export Current Inventory File
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Search form -->
+        <form method="post" class="grid grid-cols-1 gap-4 sm:gap-6">
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium text-lg">Device Code Search</span>
+                </label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input 
+                        type="text" 
+                        name="search_term" 
+                        placeholder="Enter device code (supports fuzzy search by last 3 digits, e.g., 014)" 
+                        class="input input-bordered w-full focus:border-blue-600 focus:ring-blue-600 text-sm sm:text-base"
+                        autofocus
+                    >
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary bg-blue-600 hover:bg-blue-700 border-0 text-sm sm:text-base px-4 sm:px-6"
+                    >
+                        <i class="fas fa-search sm:mr-2"></i>
+                        <span class="hidden sm:inline">Start Search</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Result display -->
+        {% if error %}
+        <div class="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6">
+            <p class="text-red-700 font-medium text-lg">{{ error }}</p>
+            <!-- Conditional check: Show selection buttons only if error is not file template error -->
+            {% if search_term and error != 'File template is incorrect. Please check the file format' %}
+            <form method="post" class="mt-4 flex flex-col sm:flex-row gap-2">
+                <input type="hidden" name="unmatched_code" value="{{ search_term }}">
+                <button type="submit" name="action" value="yes" class="action-btn primary text-sm sm:text-base">
+                    Yes, Record as Physical Presence Without Accounting
+                </button>
+                <button type="submit" name="action" value="no" class="action-btn secondary text-sm sm:text-base">
+                    No, Ignore This Code
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% elif results %}
+        <div class="mt-6 bg-white rounded-xl shadow-sm overflow-hidden">
+            <form method="post">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm sm:text-base">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-3 sm:p-4 text-left">Select</th>
+                                {% for field in DISPLAY_FIELDS %}
+                                <th class="p-3 sm:p-4 text-left">{{ field }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for item in results %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 sm:p-4 align-middle">
+                                    <input type="checkbox" name="marked_codes" value="{{ item['设备编码'] }}" 
+                                           class="form-checkbox h-4 w-4 border-gray-300 rounded"
+                                           {% if item['盘点状态'] == '已盘点' %}disabled{% endif %}>
+                                </td>
+                                {% for field, value in item.items() %}
+                                <!-- Check if value is NaN and display placeholder if so -->
+                                <td class="p-3 sm:p-4 align-middle">{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 bg-gray-50">
+                    <button type="submit" class="action-btn primary w-full sm:w-auto text-sm sm:text-base">
+                        Batch Mark as Checked
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Success message -->
+        {% if success %}
+        <div class="mt-6 bg-green-50 border border-green-200 rounded-xl p-4 sm:p-6">
+            <p class="text-green-700 font-medium text-lg">{{ success }}</p>
+        </div>
+        {% endif %}
+    </div>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+</body>
+
+</html>
